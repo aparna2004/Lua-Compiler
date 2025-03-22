@@ -2,6 +2,7 @@ x = 5 + 3;
 
 a = 1;
 
+ok = true;
 if (x < 10) {
     y = x * 2;
 } else {
@@ -15,7 +16,7 @@ while (y > 0) {
 
 a = 3;
 
-z = 1 + x + y;
+z = a + x + y;
 
 a = 4; 
 

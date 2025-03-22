@@ -83,7 +83,19 @@ void printIC(ICList* list, FILE* out) {
         ThreeAddressCode* instr = &list->instructions[i];
         if (strcmp(instr->op, "goto") == 0 || strcmp(instr->op, "label") == 0) {
             fprintf(out, "%s %s\n", instr->op, instr->arg1);
-        } else {
+        }
+        else if(strcmp(instr->op,"=") == 0){
+//            fprintf(out,"res '%s' a1 '%s' op '%s' a2 '%s'\n", instr->result, instr->arg1, instr->op, instr->arg2 ? instr->arg2 : "");
+            fprintf(out, "%s = %s \n", instr->result, instr->arg1);
+
+        }
+        else if(strcmp(instr->op,"if") == 0){
+//            fprintf(out,"res '%s' a1 '%s' op '%s' a2 '%s'\n", instr->result, instr->arg1, instr->op, instr->arg2 ? instr->arg2 : "");
+            fprintf(out, "if %s goto %s \n", instr->arg1, instr->arg2);
+
+        }
+        else {
+//            fprintf(out,"res '%s' a1 '%s' op '%s' a2 '%s'\n", instr->result, instr->arg1, instr->op, instr->arg2 ? instr->arg2 : "");
             fprintf(out, "%s = %s %s %s\n", instr->result, instr->arg1, instr->op, instr->arg2 ? instr->arg2 : "");
         }
     }

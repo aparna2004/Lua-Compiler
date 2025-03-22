@@ -1,0 +1,4 @@
+lex lexer.l
+yacc -d parser.y
+gcc lex.yy.c y.tab.c ast.c -o compiler
+./compiler

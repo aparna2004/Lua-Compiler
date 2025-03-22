@@ -27,6 +27,12 @@
 *.lib
 
 # Executables
+compiler
+ast.txt
+ic.txt
 *.exe
 *.out
 *.app
+
+cmake-build-debug/
+.idea/

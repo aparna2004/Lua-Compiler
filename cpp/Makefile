@@ -1,7 +1,7 @@
 all: main
 
 main: lexer.o parser.tab.o ast.o main.o
-	g++ -o main lexer.o parser.tab.o ast.o main.o  
+	g++ -o main lexer.o parser.tab.o ast.o main.o
 
 lexer.o: lexer.cpp parser.tab.h
 	g++ -c -o lexer.o lexer.cpp

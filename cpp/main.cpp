@@ -8,12 +8,12 @@ extern "C"
     int yyparse(void);
 }
 // extern int yylex(); // Add this line to fix the yylex reference issue
-extern int yydebug;
+// extern int yydebug;
 extern Node *root;
 
 int main()
 {
-    yydebug = 1;
+    // yydebug = 1;
     std::cout << "Parsing..." << std::endl;
 
     if (yyparse() == 0)
@@ -23,6 +23,13 @@ int main()
         {
             root->print();
             std::cout << std::endl;
+            std::cout << "\n\nIntermediate Code:" << std::endl;
+
+            auto [_, code] = root->generateIC();
+            for (const auto &line : code)
+            {
+                std::cout << line << std::endl;
+            }
         }
         std::cout << std::endl;
     }

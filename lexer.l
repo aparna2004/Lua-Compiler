@@ -20,6 +20,8 @@ extern YYSTYPE yylval;  // Match Yacc's YYSTYPE from %union
 [a-zA-Z_][a-zA-Z0-9_]*  { yylval.str = strdup(yytext); return IDENTIFIER; }
 [0-9]+                  { yylval.num = atoi(yytext); return NUMBER; }
 
+"--".*       ;
+
 "="          { return ASSIGN; }
 "+"          { return PLUS; }
 "-"          { return MINUS; }

@@ -34,5 +34,11 @@ ic.txt
 *.out
 *.app
 
+
 cmake-build-debug/
 .idea/
+*.o
+cpp/parser.tab.*
+main
+cpp/lexer.c
+cpp/lexer.cpp

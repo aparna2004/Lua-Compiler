@@ -18,6 +18,9 @@ extern "C" int yylex();
 "then"                       { return THEN; }
 "do"                       { return DO; }
 "end"                      { return END; }
+"for"                     { return FOR; }
+"in"                      { return IN; }
+","                       { return COMMA; }
 
 "true"                    { yylval.boolVal = true; return TRUE; }
 "false"                   { yylval.boolVal = false; return FALSE; }

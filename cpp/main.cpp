@@ -8,12 +8,12 @@ extern "C"
     int yyparse(void);
 }
 // extern int yylex(); // Add this line to fix the yylex reference issue
-// extern int yydebug;
+extern int yydebug;
 extern Node *root;
 
 int main()
 {
-    // yydebug = 1;
+    yydebug = 1;
     std::cout << "Parsing..." << std::endl;
 
     if (yyparse() == 0)

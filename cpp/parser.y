@@ -31,10 +31,10 @@ Node* root = nullptr;
 %token <boolVal> TRUE FALSE
 %token IF ELSE WHILE THEN END DO
 %token AND OR NOT
-
+%token FOR COMMA IN
 %token LPAREN RPAREN LBRACE RBRACE ASSIGN EQ LT GT PLUS MINUS MULT DIV
 
-%type <node> stmt expr block  program bool_expr logic_expr
+%type <node> stmt expr block  program bool_expr logic_expr for_stmt
 
 /* %left PLUS MINUS
 %left MULT DIV
@@ -48,6 +48,8 @@ Node* root = nullptr;
 %left LT GT
 %left PLUS MINUS
 %left MULT DIV
+
+%right UMINUS
 
 
 %%
@@ -63,10 +65,18 @@ block:
 
 stmt:
     IDENT ASSIGN expr { $$ = new AssignNode($1, $3); }
-    | IF expr THEN block END { $$ = new IfNode($2, $4); }
+    | IF expr THEN block END { $$ = new IfNode($2, $4, nullptr); }
+    | IF expr THEN block ELSE block END { $$ = new IfNode($2, $4, $6); }
     | WHILE expr DO block END { $$ = new WhileNode($2, $4); }
+    | for_stmt { $$ = $1; }
     ;
 
+for_stmt:
+    FOR IDENT ASSIGN expr COMMA expr DO block END 
+        { $$ = new ForNode($2, $4, $6, new NumNode(1), $8); }
+    | FOR IDENT ASSIGN expr COMMA expr COMMA expr DO block END 
+        { $$ = new ForNode($2, $4, $6, $8, $10); }
+    ;
 
 expr:
     bool_expr { $$ = $1; }
@@ -75,8 +85,10 @@ expr:
     | expr MINUS expr { $$ = new BinaryOpNode($1, "-", $3); }
     | expr MULT expr { $$ = new BinaryOpNode($1, "*", $3); }
     | expr DIV expr { $$ = new BinaryOpNode($1, "/", $3); }
+    | MINUS expr %prec UMINUS { $$ = new UnaryMinusNode($2); }
     | LPAREN expr RPAREN { $$ = $2; }
     | IDENT { $$ = new VarNode($1); }
+    | MINUS NUMBER { $$ = new NumNode(-$2); } 
     | NUMBER { $$ = new NumNode($1); }
     ;
 

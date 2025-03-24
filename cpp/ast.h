@@ -103,32 +103,56 @@ public:
     }
 };
 
+
+
 class IfNode : public Node
 {
 public:
     Node *cond;
-    Node *block;
+    Node *thenBlock;
+    Node *elseBlock; // Can be nullptr for if without else
 
-    IfNode(Node *c, Node *b) : cond(c), block(b) {}
+    IfNode(Node *c, Node *t, Node *e = nullptr)
+        : cond(c), thenBlock(t), elseBlock(e) {}
 
     void print() const override
     {
         std::cout << "if (";
         cond->print();
-        std::cout << ") ";
-        block->print();
+        std::cout << ") then ";
+        thenBlock->print();
+        if (elseBlock)
+        {
+            std::cout << " else ";
+            elseBlock->print();
+        }
+        std::cout << " end";
     }
+
     std::pair<std::string, std::vector<std::string>> generateIC() override
     {
         auto [condTemp, condCode] = cond->generateIC();
-        auto [_, blockCode] = block->generateIC();
+        auto [_, thenCode] = thenBlock->generateIC();
 
+        std::string labelElse = newLabel();
         std::string labelEnd = newLabel();
 
         std::vector<std::string> code = condCode;
-        code.push_back("if " + condTemp + " = 0 goto " + labelEnd);
-        code.insert(code.end(), blockCode.begin(), blockCode.end());
-        code.push_back(labelEnd + ":");
+        code.push_back("if " + condTemp + " = 0 goto " + labelElse);
+        code.insert(code.end(), thenCode.begin(), thenCode.end());
+
+        if (elseBlock)
+        {
+            auto [__, elseCode] = elseBlock->generateIC();
+            code.push_back("goto " + labelEnd);
+            code.push_back(labelElse + ":");
+            code.insert(code.end(), elseCode.begin(), elseCode.end());
+            code.push_back(labelEnd + ":");
+        }
+        else
+        {
+            code.push_back(labelElse + ":");
+        }
 
         return {"", code};
     }
@@ -235,5 +259,150 @@ public:
         return {temp, exprCode};
     }
 };
+// Add after UnaryOpNode class, before the #endif
 
+class ForNode : public Node
+{
+private:
+    std::string var;
+    Node *start;
+    Node *end;
+    Node *step;
+    Node *body;
+
+public:
+    ForNode(const std::string &varName, Node *startExpr, Node *endExpr,
+            Node *stepExpr, Node *bodyNode)
+        : var(varName), start(startExpr), end(endExpr),
+          step(stepExpr), body(bodyNode) {}
+
+    void print() const override
+    {
+        std::cout << "for " << var << " = ";
+        start->print();
+        std::cout << ", ";
+        end->print();
+        std::cout << ", ";
+        step->print();
+        std::cout << " do ";
+        body->print();
+        std::cout << " end";
+    }
+
+    // std::pair<std::string, std::vector<std::string>> generateIC() override
+    // {
+    //     auto [startTemp, startCode] = start->generateIC();
+    //     auto [endTemp, endCode] = end->generateIC();
+    //     auto [stepTemp, stepCode] = step->generateIC();
+    //     auto [_, bodyCode] = body->generateIC();
+
+    //     std::string labelLoop = newLabel();
+    //     std::string labelEnd = newLabel();
+    //     std::string condTemp = newTemp();
+
+    //     std::vector<std::string> code;
+    //     // Initialize loop variable
+    //     code.insert(code.end(), startCode.begin(), startCode.end());
+    //     code.push_back(var + " = " + startTemp);
+
+    //     // Generate loop header
+    //     code.push_back(labelLoop + ":");
+
+    //     // Check loop condition
+    //     code.insert(code.end(), stepCode.begin(), stepCode.end());
+    //     code.insert(code.end(), endCode.begin(), endCode.end());
+    //     code.push_back(condTemp + " = " + stepTemp + " >= 0 ? " +
+    //                    var + " <= " + endTemp + " : " + var + " >= " + endTemp);
+    //     code.push_back("if " + condTemp + " = 0 goto " + labelEnd);
+
+    //     // Loop body
+    //     code.insert(code.end(), bodyCode.begin(), bodyCode.end());
+
+    //     // Increment
+    //     code.insert(code.end(), stepCode.begin(), stepCode.end());
+    //     code.push_back(var + " = " + var + " + " + stepTemp);
+    //     code.push_back("goto " + labelLoop);
+
+    //     // Loop end
+    //     code.push_back(labelEnd + ":");
+
+    //     return {"", code};
+    // }
+    std::pair<std::string, std::vector<std::string>> generateIC() override
+    {
+        // ...existing code...
+        auto [startTemp, startCode] = start->generateIC();
+        auto [endTemp, endCode] = end->generateIC();
+        auto [stepTemp, stepCode] = step->generateIC();
+        auto [_, bodyCode] = body->generateIC();
+        std::string labelLoop = newLabel();
+        std::string labelEnd = newLabel();
+        std::string labelCheckGE = newLabel();
+        std::string condTemp = newTemp();
+        std::string stepCheckTemp = newTemp();
+        std::string comparisonTemp = newTemp();
+
+        std::vector<std::string> code;
+        // Initialize loop variable and store step
+        code.insert(code.end(), startCode.begin(), startCode.end());
+        code.insert(code.end(), stepCode.begin(), stepCode.end());
+        code.push_back(var + " = " + startTemp);
+
+        // Generate loop header
+        code.push_back(labelLoop + ":");
+
+        // Check step direction and branch accordingly
+        code.push_back(stepCheckTemp + " = " + stepTemp + " >= 0");
+        code.push_back("if " + stepCheckTemp + " = 0 goto " + labelCheckGE);
+
+        // For positive step, check if var <= end
+        code.push_back(comparisonTemp + " = " + var + " <= " + endTemp);
+        code.push_back("goto " + labelEnd);
+
+        // For negative step, check if var >= end
+        code.push_back(labelCheckGE + ":");
+        code.push_back(comparisonTemp + " = " + var + " >= " + endTemp);
+
+        // Check condition and exit if false
+        code.push_back("if " + comparisonTemp + " = 0 goto " + labelEnd);
+
+        // Loop body
+        code.insert(code.end(), bodyCode.begin(), bodyCode.end());
+
+        // Increment
+        code.push_back(var + " = " + var + " + " + stepTemp);
+        code.push_back("goto " + labelLoop);
+
+        // Loop end
+        code.push_back(labelEnd + ":");
+
+        return {"", code};
+    }
+};
+class UnaryMinusNode : public Node
+{
+private:
+    Node *expr;
+
+public:
+    UnaryMinusNode(Node *e) : expr(e) {}
+
+    void print() const override
+    {
+        std::cout << "(-";
+        expr->print();
+        std::cout << ")";
+    }
+
+    std::pair<std::string, std::vector<std::string>> generateIC() override
+    {
+        auto [exprTemp, exprCode] = expr->generateIC();
+        std::string resultTemp = newTemp();
+
+        std::vector<std::string> code = exprCode;
+        code.push_back(resultTemp + " = -" + exprTemp);
+
+        return {resultTemp, code};
+    }
+};
 #endif

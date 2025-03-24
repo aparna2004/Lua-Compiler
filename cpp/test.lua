@@ -77,3 +77,8 @@ if x > 0 then
 else
     x = 0
 end
+
+print(x)
+print(y)
+print(a *b)
+print(z < 2)

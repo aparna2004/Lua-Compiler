@@ -405,4 +405,33 @@ public:
         return {resultTemp, code};
     }
 };
+
+// Add before the #endif
+
+class PrintNode : public Node
+{
+private:
+    Node *expr;
+
+public:
+    PrintNode(Node *e) : expr(e) {}
+
+    void print() const override
+    {
+        std::cout << "print(";
+        expr->print();
+        std::cout << ")";
+    }
+
+    std::pair<std::string, std::vector<std::string>> generateIC() override
+    {
+        auto [exprTemp, exprCode] = expr->generateIC();
+
+        std::vector<std::string> code = exprCode;
+        code.push_back("param " + exprTemp);
+        code.push_back("call print, 1");
+
+        return {"", code};
+    }
+};
 #endif

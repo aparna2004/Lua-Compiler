@@ -15,12 +15,13 @@ extern "C" int yylex();
 "if"                      { return IF; }
 "else"                    { return ELSE; }
 "while"                   { return WHILE; }
-"then"                       { return THEN; }
-"do"                       { return DO; }
-"end"                      { return END; }
+"then"                    { return THEN; }
+"do"                      { return DO; }
+"end"                     { return END; }
 "for"                     { return FOR; }
 "in"                      { return IN; }
 ","                       { return COMMA; }
+"print"                   { return PRINT; }
 
 "true"                    { yylval.boolVal = true; return TRUE; }
 "false"                   { yylval.boolVal = false; return FALSE; }

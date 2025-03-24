@@ -33,6 +33,8 @@ Node* root = nullptr;
 %token AND OR NOT
 %token FOR COMMA IN
 %token LPAREN RPAREN LBRACE RBRACE ASSIGN EQ LT GT PLUS MINUS MULT DIV
+%token PRINT
+
 
 %type <node> stmt expr block  program bool_expr logic_expr for_stmt
 
@@ -69,6 +71,7 @@ stmt:
     | IF expr THEN block ELSE block END { $$ = new IfNode($2, $4, $6); }
     | WHILE expr DO block END { $$ = new WhileNode($2, $4); }
     | for_stmt { $$ = $1; }
+    | PRINT expr { $$ = new PrintNode($2); }
     ;
 
 for_stmt:

@@ -1,6 +1,7 @@
 #include <iostream>
 #include "ast.h"
 #include "parser.tab.h"
+#include <map>
 
 extern "C"
 {
@@ -11,9 +12,19 @@ extern "C"
 extern int yydebug;
 extern Node *root;
 
+// std::map<std::string, int> symbolTable;
+
+void executeAST(Node *root)
+{
+    if (root)
+    {
+        root->evaluate(); // Direct evaluation
+    }
+}
+
 int main()
 {
-    yydebug = 1;
+    // yydebug = 1;
     std::cout << "Parsing..." << std::endl;
 
     if (yyparse() == 0)
@@ -30,6 +41,8 @@ int main()
             {
                 std::cout << line << std::endl;
             }
+            std::cout << "OUTPUT:" << std::endl;
+            executeAST(root);
         }
         std::cout << std::endl;
     }

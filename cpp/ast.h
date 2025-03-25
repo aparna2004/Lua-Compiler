@@ -7,7 +7,7 @@
 #include <utility>
 #include <variant>
 
-using Value = std::variant<int, bool>;
+using Value = std::variant<int, bool, std::string>;
 using ICResult = std::pair<std::string, std::vector<std::string>>;
 
 class Node
@@ -140,7 +140,7 @@ public:
         return {var, exprCode};
     }
 };
-
+/*
 class IfNode : public Node
 {
 public:
@@ -195,7 +195,68 @@ public:
         return {"", code};
     }
 };
+*/
+class IfNode : public Node
+{
+public:
+    Node *condition;
+    Node *thenBlock;
+    Node *elseifList;
+    Node *elseBlock;
 
+    IfNode(Node *cond, Node *then, Node *elseif = nullptr, Node *else_block = nullptr)
+        : condition(cond), thenBlock(then), elseifList(elseif), elseBlock(else_block) {}
+
+    Value evaluate() override;
+
+    void print() const override
+    {
+        std::cout << "if ";
+        condition->print();
+        std::cout << " then ";
+        thenBlock->print();
+        if (elseifList)
+        {
+            elseifList->print();
+        }
+        if (elseBlock)
+        {
+            std::cout << " else ";
+            elseBlock->print();
+        }
+        std::cout << " end";
+    }
+
+    std::pair<std::string, std::vector<std::string>> generateIC() override
+    {
+        auto [condTemp, condCode] = condition->generateIC();
+        auto [_, thenCode] = thenBlock->generateIC();
+
+        std::string labelElseif = newLabel();
+        std::string labelEnd = newLabel();
+
+        std::vector<std::string> code = condCode;
+        code.push_back("if " + condTemp + " = 0 goto " + labelElseif);
+        code.insert(code.end(), thenCode.begin(), thenCode.end());
+        code.push_back("goto " + labelEnd);
+
+        code.push_back(labelElseif + ":");
+        if (elseifList)
+        {
+            auto [__, elseifCode] = elseifList->generateIC();
+            code.insert(code.end(), elseifCode.begin(), elseifCode.end());
+        }
+
+        if (elseBlock)
+        {
+            auto [___, elseCode] = elseBlock->generateIC();
+            code.insert(code.end(), elseCode.begin(), elseCode.end());
+        }
+
+        code.push_back(labelEnd + ":");
+        return {"", code};
+    }
+};
 class WhileNode : public Node
 {
 public:
@@ -412,5 +473,77 @@ public:
         return {resultTemp, code};
     }
 };
+// Add StringNode class
+class StringNode : public Node
+{
+    std::string value;
 
+public:
+    StringNode(const std::string &v) : value(v) {}
+
+    void print() const override
+    {
+        std::cout << "\"" << value << "\"";
+    }
+
+    Value evaluate() override
+    {
+        return value;
+    }
+
+    ICResult generateIC() override
+    {
+        std::string temp = newTemp();
+        return {temp, {temp + " = \"" + value + "\""}};
+    }
+};
+
+class ElseIfNode : public Node
+{
+public:
+    Node *condition;
+    Node *body;
+    Node *next; // Next elseif in chain
+
+    ElseIfNode(Node *cond, Node *body, Node *next = nullptr)
+        : condition(cond), body(body), next(next) {}
+
+    Value evaluate() override;
+    
+    void print() const override
+    {
+        std::cout << "elseif ";
+        condition->print();
+        std::cout << " then ";
+        body->print();
+        if (next)
+        {
+            next->print();
+        }
+    }
+
+    std::pair<std::string, std::vector<std::string>> generateIC() override
+    {
+        auto [condTemp, condCode] = condition->generateIC();
+        auto [_, bodyCode] = body->generateIC();
+
+        std::string labelNext = newLabel();
+        std::string labelEnd = newLabel();
+
+        std::vector<std::string> code = condCode;
+        code.push_back("if " + condTemp + " = 0 goto " + labelNext);
+        code.insert(code.end(), bodyCode.begin(), bodyCode.end());
+        code.push_back("goto " + labelEnd);
+        code.push_back(labelNext + ":");
+
+        if (next)
+        {
+            auto [__, nextCode] = next->generateIC();
+            code.insert(code.end(), nextCode.begin(), nextCode.end());
+        }
+
+        code.push_back(labelEnd + ":");
+        return {"", code};
+    }
+};
 #endif

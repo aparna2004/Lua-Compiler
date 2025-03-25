@@ -14,10 +14,14 @@ extern "C" int yylex();
 
 "if"                      { return IF; }
 "else"                    { return ELSE; }
+"elseif"                   { return ELSEIF; }
+
+
 "while"                   { return WHILE; }
 "then"                    { return THEN; }
 "do"                      { return DO; }
 "end"                     { return END; }
+
 "for"                     { return FOR; }
 "in"                      { return IN; }
 ","                       { return COMMA; }
@@ -29,7 +33,13 @@ extern "C" int yylex();
 "or"                      { return OR; }
 "not"                     { return NOT; }
 
-
+\"[^\"]*\"  { 
+    std::string str = yytext;
+    // Remove the quotes
+    str = str.substr(1, str.length() - 2);
+    yylval.strVal = strdup(str.c_str());
+    return STRING; 
+}
 [0-9]+                     { yylval.intVal = atoi(yytext); return NUMBER; }
 [a-zA-Z_][a-zA-Z0-9_]*      { yylval.strVal = strdup(yytext); return IDENT; }
 

@@ -29,14 +29,15 @@ Node* root = nullptr;
 %token <intVal> NUMBER
 %token <strVal> IDENT
 %token <boolVal> TRUE FALSE
-%token IF ELSE WHILE THEN END DO
+%token IF ELSE ELSEIF WHILE THEN END DO
 %token AND OR NOT
 %token FOR COMMA IN
 %token LPAREN RPAREN LBRACE RBRACE ASSIGN EQ LT GT PLUS MINUS MULT DIV
 %token PRINT
+%token <strVal> STRING
 
 
-%type <node> stmt expr block  program bool_expr logic_expr for_stmt
+%type <node> stmt expr block  program bool_expr logic_expr for_stmt elseif_list
 
 /* %left PLUS MINUS
 %left MULT DIV
@@ -67,11 +68,16 @@ block:
 
 stmt:
     IDENT ASSIGN expr { $$ = new AssignNode($1, $3); }
-    | IF expr THEN block END { $$ = new IfNode($2, $4, nullptr); }
-    | IF expr THEN block ELSE block END { $$ = new IfNode($2, $4, $6); }
+    | IF expr THEN block elseif_list END { $$ = new IfNode($2, $4, $5); }
+    | IF expr THEN block elseif_list ELSE block END { $$ = new IfNode($2, $4, $5, $7); }
     | WHILE expr DO block END { $$ = new WhileNode($2, $4); }
     | for_stmt { $$ = $1; }
     | PRINT expr { $$ = new PrintNode($2); }
+    ;
+
+elseif_list:
+    /* empty */ { $$ = nullptr; }
+    | elseif_list ELSEIF expr THEN block { $$ = new ElseIfNode($3, $5, $1); }
     ;
 
 for_stmt:
@@ -93,6 +99,7 @@ expr:
     | IDENT { $$ = new VarNode($1); }
     | MINUS NUMBER { $$ = new NumNode(-$2); } 
     | NUMBER { $$ = new NumNode($1); }
+    | STRING { $$ = new StringNode($1); }
     ;
 
 bool_expr:

@@ -111,15 +111,76 @@ Value AssignNode::evaluate()
     return exprValue;
 }
 
+// Value IfNode::evaluate()
+// {
+//     if (std::get<bool>(cond->evaluate()))
+//     {
+//         return thenBlock->evaluate();
+//     }
+//     else if (elseBlock)
+//     {
+//         return elseBlock->evaluate();
+//     }
+//     return 0;
+// }
 Value IfNode::evaluate()
 {
-    if (std::get<bool>(cond->evaluate()))
+    Value condResult = condition->evaluate();
+    bool condValue;
+
+    if (std::holds_alternative<bool>(condResult))
+    {
+        condValue = std::get<bool>(condResult);
+    }
+    else if (std::holds_alternative<int>(condResult))
+    {
+        condValue = std::get<int>(condResult) != 0;
+    }
+    else
+    {
+        throw std::runtime_error("Condition must evaluate to boolean or number");
+    }
+
+    if (condValue)
     {
         return thenBlock->evaluate();
+    }
+    else if (elseifList)
+    {
+        return elseifList->evaluate();
     }
     else if (elseBlock)
     {
         return elseBlock->evaluate();
+    }
+    return 0;
+}
+
+Value ElseIfNode::evaluate()
+{
+    Value condResult = condition->evaluate();
+    bool condValue;
+
+    if (std::holds_alternative<bool>(condResult))
+    {
+        condValue = std::get<bool>(condResult);
+    }
+    else if (std::holds_alternative<int>(condResult))
+    {
+        condValue = std::get<int>(condResult) != 0;
+    }
+    else
+    {
+        throw std::runtime_error("Condition must evaluate to boolean or number");
+    }
+
+    if (condValue)
+    {
+        return body->evaluate();
+    }
+    else if (next)
+    {
+        return next->evaluate();
     }
     return 0;
 }
@@ -170,16 +231,20 @@ Value BlockNode::evaluate()
 
 Value PrintNode::evaluate()
 {
-    auto value = expr->evaluate();
-    if (std::holds_alternative<int>(value))
+    Value val = expr->evaluate();
+    if (std::holds_alternative<std::string>(val))
     {
-        std::cout << std::get<int>(value) << std::endl;
+        std::cout << std::get<std::string>(val) << std::endl;
     }
-    else if (std::holds_alternative<bool>(value))
+    else if (std::holds_alternative<int>(val))
     {
-        std::cout << (std::get<bool>(value) ? "true" : "false") << std::endl;
+        std::cout << std::get<int>(val) << std::endl;
     }
-    return 0;
+    else if (std::holds_alternative<bool>(val))
+    {
+        std::cout << (std::get<bool>(val) ? "true" : "false") << std::endl;
+    }
+    return val;
 }
 
 Value UnaryMinusNode::evaluate()

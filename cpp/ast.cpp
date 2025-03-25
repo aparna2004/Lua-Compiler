@@ -23,6 +23,48 @@ Value BinaryOpNode::evaluate()
     Value rightVal = right->evaluate();
 
     // Arithmetic operations (require integers)
+    if (op == "..")
+    {
+        try
+        {
+            std::string result;
+
+            // Convert left value to string
+            if (std::holds_alternative<std::string>(leftVal))
+            {
+                result = std::get<std::string>(leftVal);
+            }
+            else if (std::holds_alternative<int>(leftVal))
+            {
+                result = std::to_string(std::get<int>(leftVal));
+            }
+            else if (std::holds_alternative<bool>(leftVal))
+            {
+                result = std::get<bool>(leftVal) ? "true" : "false";
+            }
+
+            // Convert and concatenate right value
+            if (std::holds_alternative<std::string>(rightVal))
+            {
+                result += std::get<std::string>(rightVal);
+            }
+            else if (std::holds_alternative<int>(rightVal))
+            {
+                result += std::to_string(std::get<int>(rightVal));
+            }
+            else if (std::holds_alternative<bool>(rightVal))
+            {
+                result += std::get<bool>(rightVal) ? "true" : "false";
+            }
+
+            return result;
+        }
+        catch (const std::bad_variant_access &)
+        {
+            throw std::runtime_error("Invalid types for concatenation");
+        }
+    }
+
     if (op == "+" || op == "-" || op == "*" || op == "/")
     {
         try
@@ -50,7 +92,7 @@ Value BinaryOpNode::evaluate()
     }
 
     // Comparison operations (can compare integers)
-    if (op == "<" || op == ">" || op == "==")
+    if (op == "<" || op == ">" || op == "==" || op == "~=" || op == "<=" || op == ">=")
     {
         try
         {
@@ -63,6 +105,12 @@ Value BinaryOpNode::evaluate()
                 return l > r;
             if (op == "==")
                 return l == r;
+            if (op == "~=")
+                return l != r;
+            if (op == "<=")
+                return l <= r;
+            if (op == ">=")
+                return l >= r;
         }
         catch (const std::bad_variant_access &)
         {

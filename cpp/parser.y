@@ -35,6 +35,9 @@ Node* root = nullptr;
 %token LPAREN RPAREN LBRACE RBRACE ASSIGN EQ LT GT PLUS MINUS MULT DIV
 %token PRINT
 %token <strVal> STRING
+%token CONCAT
+
+%token GE LE NE
 
 
 %type <node> stmt expr block  program bool_expr logic_expr for_stmt elseif_list
@@ -43,12 +46,15 @@ Node* root = nullptr;
 %left MULT DIV
 %nonassoc LT GT EQ
 %nonassoc IF ELSE */
-
+%left CONCAT
 %left OR
 %left AND
 %right NOT
-%left EQ
-%left LT GT
+// Add to token declarations
+
+// Update operator precedence section
+%left EQ NE
+%left LT GT LE GE
 %left PLUS MINUS
 %left MULT DIV
 
@@ -94,6 +100,7 @@ expr:
     | expr MINUS expr { $$ = new BinaryOpNode($1, "-", $3); }
     | expr MULT expr { $$ = new BinaryOpNode($1, "*", $3); }
     | expr DIV expr { $$ = new BinaryOpNode($1, "/", $3); }
+    | expr CONCAT expr { $$ = new BinaryOpNode($1, "..", $3); }
     | MINUS expr %prec UMINUS { $$ = new UnaryMinusNode($2); }
     | LPAREN expr RPAREN { $$ = $2; }
     | IDENT { $$ = new VarNode($1); }
@@ -114,6 +121,9 @@ logic_expr:
     | expr AND expr      { $$ = new BinaryOpNode($1, "and", $3); }
     | expr OR expr       { $$ = new BinaryOpNode($1, "or", $3); }
     | NOT expr           { $$ = new UnaryOpNode("not", $2); }
+    | expr NE expr    { $$ = new BinaryOpNode($1, "~=", $3); }
+    | expr LE expr    { $$ = new BinaryOpNode($1, "<=", $3); }
+    | expr GE expr    { $$ = new BinaryOpNode($1, ">=", $3); }
     ;
 
 %%

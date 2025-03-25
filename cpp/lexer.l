@@ -26,6 +26,7 @@ extern "C" int yylex();
 "in"                      { return IN; }
 ","                       { return COMMA; }
 "print"                   { return PRINT; }
+".."                      { return CONCAT; } 
 
 "true"                    { yylval.boolVal = true; return TRUE; }
 "false"                   { yylval.boolVal = false; return FALSE; }
@@ -49,6 +50,9 @@ extern "C" int yylex();
 "}"                        { return RBRACE; }
 "="                        { return ASSIGN; }
 "=="                       { return EQ; }
+">="                       { return GE; }
+"<="                       { return LE; }
+"~="                       { return NE; }
 "<"                        { return LT; }
 ">"                        { return GT; }
 "+"                        { return PLUS; }

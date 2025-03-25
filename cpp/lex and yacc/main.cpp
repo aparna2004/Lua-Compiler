@@ -24,7 +24,7 @@ void executeAST(Node *root)
 
 int main()
 {
-    // yydebug = 1;
+    yydebug = 1;
     std::cout << "Parsing..." << std::endl;
 
     if (yyparse() == 0)
@@ -49,6 +49,7 @@ int main()
     else
     {
         std::cerr << "Parsing failed!" << std::endl;
+        return -1;
     }
 
     return 0;

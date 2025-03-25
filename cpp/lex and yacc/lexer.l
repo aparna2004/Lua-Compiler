@@ -50,11 +50,11 @@ extern "C" int yylex();
 "}"                        { return RBRACE; }
 "="                        { return ASSIGN; }
 "=="                       { return EQ; }
-">="                       { return GE; }
-"<="                       { return LE; }
-"~="                       { return NE; }
 "<"                        { return LT; }
 ">"                        { return GT; }
+"<="                        { return LE; }
+">="                        { return GE; }
+"~="                        { return NE; }
 "+"                        { return PLUS; }
 "-"                        { return MINUS; }
 "*"                        { return MULT; }

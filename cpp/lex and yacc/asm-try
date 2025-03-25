@@ -1,0 +1,139 @@
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <sstream>
+#include <unordered_map>
+#include <vector>
+
+using namespace std;
+
+struct Instruction {
+    string op;
+    string arg1;
+    string arg2;
+    string result;
+};
+
+unordered_map<string, string> variables;
+
+string getRegister(const string &var) {
+    if (variables.find(var) == variables.end()) {
+        static int counter = 0;
+        string reg = "r" + to_string(counter++);
+        variables[var] = reg;
+    }
+    return variables[var];
+}
+
+void generateAssembly(const vector<Instruction> &tac, const string &filename) {
+    ofstream asmFile(filename);
+
+    // Data section
+    asmFile << "section .data\n";
+    for (const auto &pair : variables) {
+        asmFile << "    " << pair.second << " dd 0\n";
+    }
+
+    // Text section
+    asmFile << "\nsection .text\n";
+    asmFile << "    global _start\n";
+    asmFile << "_start:\n";
+
+    for (const auto &instr : tac) {
+        string r1 = getRegister(instr.arg1);
+        string r2 = instr.arg2.empty() ? "" : getRegister(instr.arg2);
+        string res = getRegister(instr.result);
+
+        if (instr.op == "+") {
+            asmFile << "    mov eax, [" << r1 << "]\n";
+            asmFile << "    add eax, [" << r2 << "]\n";
+            asmFile << "    mov [" << res << "], eax\n";
+        } else if (instr.op == "-") {
+            asmFile << "    mov eax, [" << r1 << "]\n";
+            asmFile << "    sub eax, [" << r2 << "]\n";
+            asmFile << "    mov [" << res << "], eax\n";
+        } else if (instr.op == "*") {
+            asmFile << "    mov eax, [" << r1 << "]\n";
+            asmFile << "    imul eax, [" << r2 << "]\n";
+            asmFile << "    mov [" << res << "], eax\n";
+        } else if (instr.op == "/") {
+            asmFile << "    mov eax, [" << r1 << "]\n";
+            asmFile << "    cdq\n";
+            asmFile << "    idiv dword [" << r2 << "]\n";
+            asmFile << "    mov [" << res << "], eax\n";
+        } else if (instr.op == "=") {
+            asmFile << "    mov eax, " << instr.arg1 << "\n";
+            asmFile << "    mov [" << res << "], eax\n";
+        } else if (instr.op == ">") {
+            asmFile << "    mov eax, [" << r1 << "]\n";
+            asmFile << "    cmp eax, [" << r2 << "]\n";
+            asmFile << "    setg al\n";
+            asmFile << "    movzx eax, al\n";
+            asmFile << "    mov [" << res << "], eax\n";
+        } else if (instr.op == "<") {
+            asmFile << "    mov eax, [" << r1 << "]\n";
+            asmFile << "    cmp eax, [" << r2 << "]\n";
+            asmFile << "    setl al\n";
+            asmFile << "    movzx eax, al\n";
+            asmFile << "    mov [" << res << "], eax\n";
+        } else if (instr.op == "and") {
+            asmFile << "    mov eax, [" << r1 << "]\n";
+            asmFile << "    and eax, [" << r2 << "]\n";
+            asmFile << "    mov [" << res << "], eax\n";
+        } else if (instr.op == "or") {
+            asmFile << "    mov eax, [" << r1 << "]\n";
+            asmFile << "    or eax, [" << r2 << "]\n";
+            asmFile << "    mov [" << res << "], eax\n";
+        } else if (instr.op == "not") {
+            asmFile << "    mov eax, [" << r1 << "]\n";
+            asmFile << "    not eax\n";
+            asmFile << "    mov [" << res << "], eax\n";
+        } else if (instr.op == "call") {
+            asmFile << "    ; Call " << instr.arg1 << " with " << instr.arg2 << " parameters\n";
+        } else if (instr.op == "param") {
+            asmFile << "    ; Param " << instr.arg1 << "\n";
+        }
+    }
+
+    asmFile << "    mov eax, 1\n";
+    asmFile << "    xor ebx, ebx\n";
+    asmFile << "    int 0x80\n";
+
+    asmFile.close();
+}
+
+vector<Instruction> parseTAC(const string &filename) {
+    ifstream file(filename);
+    vector<Instruction> tac;
+    string line;
+
+    while (getline(file, line)) {
+        istringstream iss(line);
+        string arg1, op, arg2, result;
+
+        // Parse assignment
+        if (line.find("=") != string::npos) {
+            iss >> result >> op >> arg1;
+
+            // Handle binary operations
+            if (iss >> arg2) {
+                tac.push_back({op, arg1, arg2, result});
+            } else {
+                tac.push_back({"=", arg1, "", result});
+            }
+        }
+    }
+    return tac;
+}
+
+int main() {
+    string tacFile = "tac.txt";
+    string asmFile = "output.asm";
+
+    vector<Instruction> tac = parseTAC(tacFile);
+    generateAssembly(tac, asmFile);
+
+    cout << "Assembly generated: " << asmFile << endl;
+
+    return 0;
+}

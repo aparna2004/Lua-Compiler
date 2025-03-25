@@ -30,6 +30,7 @@ ICList* createICList(int initialCapacity);
 void addInstruction(ICList* list, const char* result, const char* op, const char* arg1, const char* arg2);
 void freeICList(ICList* list);
 void generateIC(Node* node, ICList* list, int* tempCounter, int* labelCounter);
+char* generateExprIC(Node* node, ICList* list, int* tempCounter);
 char* newTemp(int* counter);
 char* newLabel(int* counter);
 void printIC(ICList* list, FILE* out);

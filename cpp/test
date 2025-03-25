@@ -1,0 +1,67 @@
+#!/bin/bash
+
+# Colors for output
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+NC='\033[0m' # No Color
+
+if [ $# -eq 0 ]; then
+    execution_mode="maunal"
+fi
+
+if [ $# -eq 1 ]; then
+    execution_mode=$1
+fi
+
+# Counter for passed/failed tests
+passed=0
+failed=0
+
+
+
+# Make sure we're in the right directory
+if [ $execution_mode = "auto" ]; then
+    cd "lex and yacc"
+else
+    cd "manual"
+fi
+# cd "$(dirname "$0")"
+
+# First compile the project
+echo "Compiling project..."
+make clean && make
+if [ $? -ne 0 ]; then
+    echo -e "${RED}Compilation failed!${NC}"
+    exit 1
+fi
+
+echo "Running tests..."
+echo "---------------"
+
+# Run each .lua file in the tests directory
+for test_file in ../tests/*.lua; do
+    if [ -f "$test_file" ]; then
+        echo -n "Testing $(basename "$test_file")... "
+        if [ $execution_mode = "auto" ]; then
+            ./main < "$test_file" 
+        else
+            ./minilua $test_file > /dev/null
+        fi
+        if [ $? -eq 0 ]; then
+            echo -e "${GREEN}PASSED${NC}"
+            ((passed++))
+        else
+            echo -e "${RED}FAILED${NC}"
+            ((failed++))
+        fi
+    fi
+done
+
+echo "---------------"
+echo "Test Results:"
+echo -e "${GREEN}Passed: $passed${NC}"
+echo -e "${RED}Failed: $failed${NC}"
+echo "Total: $((passed + failed))"
+
+# Exit with failure if any test failed
+[ "$failed" -eq 0 ]

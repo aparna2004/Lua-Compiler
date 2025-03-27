@@ -21,11 +21,12 @@ public:
 protected:
     static int tempCount;
     static int labelCount;
+    static int indent;
     std::string newTemp() { return "t" + std::to_string(tempCount++); }
     std::string newLabel() { return "L" + std::to_string(labelCount++); }
-    void printIndent(int indent) const
+    void printIndent() const
     {
-        for (int i = 0; i < indent; i++)
+        for (int i = 0; i < Node::indent; i++)
         {
             std::cout << "  ";
         }
@@ -41,7 +42,8 @@ public:
 
     void print(int indent = 0) const override
     {
-        printIndent(indent);
+        Node::indent = indent;
+        printIndent();
         std::cout << value;
     }
 
@@ -62,7 +64,8 @@ public:
 
     void print(int indent = 0) const override
     {
-        printIndent(indent);
+        Node::indent = indent;
+        printIndent();
         std::cout << name;
     }
 
@@ -86,16 +89,12 @@ public:
 
     void print(int indent = 0) const override
     {
-        printIndent(indent);
-        std::cout << "(\n";
+        Node::indent = indent;
+        printIndent();
+        std::cout << op << "\n";
         left->print(indent + 1);
         std::cout << "\n";
-        printIndent(indent + 1);
-        std::cout << op << "\n";
         right->print(indent + 1);
-        std::cout << "\n";
-        printIndent(indent);
-        std::cout << ")";
     }
 
     Value evaluate() override; // Implemented in cpp file
@@ -124,7 +123,8 @@ public:
 
     void print(int indent = 0) const override
     {
-        printIndent(indent);
+        Node::indent = indent;
+        printIndent();
         std::cout << (value ? "true" : "false");
     }
 
@@ -134,7 +134,7 @@ public:
     {
         std::string temp = newTemp();
         return {temp, {temp + " = " + (value ? "1" : "0")}};
-    }                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
+    }
 };
 
 // Statement nodes
@@ -148,8 +148,12 @@ public:
 
     void print(int indent = 0) const override
     {
-        printIndent(indent);
-        std::cout << var << " =\n";
+        Node::indent = indent;
+        printIndent();
+        std::cout << "=\n";
+        Node::indent++;
+        printIndent();
+        std::cout << var << "\n";
         expr->print(indent + 1);
     }
 
@@ -178,10 +182,11 @@ public:
 
     void print(int indent = 0) const override
     {
-        printIndent(indent);
+        Node::indent = indent;
+        printIndent();
         std::cout << "if\n";
         condition->print(indent + 1);
-        std::cout << "\nthen\n";
+        std::cout << "\n";
         thenBlock->print(indent + 1);
         if (elseifList)
         {
@@ -191,13 +196,11 @@ public:
         if (elseBlock)
         {
             std::cout << "\n";
-            printIndent(indent);
+            Node::indent = indent;
+            printIndent();
             std::cout << "else\n";
             elseBlock->print(indent + 1);
         }
-        std::cout << "\n";
-        printIndent(indent);
-        std::cout << "end";
     }
 
     std::pair<std::string, std::vector<std::string>> generateIC() override
@@ -240,14 +243,12 @@ public:
 
     void print(int indent = 0) const override
     {
-        printIndent(indent);
+        Node::indent = indent;
+        printIndent();
         std::cout << "while\n";
         cond->print(indent + 1);
-        std::cout << "\ndo\n";
-        block->print(indent + 1);
         std::cout << "\n";
-        printIndent(indent);
-        std::cout << "end";
+        block->print(indent + 1);
     }
 
     Value evaluate() override; // Implemented in cpp file
@@ -286,18 +287,19 @@ public:
 
     void print(int indent = 0) const override
     {
-        printIndent(indent);
-        std::cout << "for " << var << " =\n";
+        Node::indent = indent;
+        printIndent();
+        std::cout << "for\n";
+        Node::indent++;
+        printIndent();
+        std::cout << var << "\n";
         start->print(indent + 1);
-        std::cout << ",\n";
-        end->print(indent + 1);
-        std::cout << ",\n";
-        step->print(indent + 1);
-        std::cout << "\ndo\n";
-        body->print(indent + 1);
         std::cout << "\n";
-        printIndent(indent);
-        std::cout << "end";
+        end->print(indent + 1);
+        std::cout << "\n";
+        step->print(indent + 1);
+        std::cout << "\n";
+        body->print(indent + 1);
     }
 
     Value evaluate() override; // Implemented in cpp file
@@ -346,12 +348,10 @@ public:
 
     void print(int indent = 0) const override
     {
-        printIndent(indent);
-        std::cout << "print(\n";
+        Node::indent = indent;
+        printIndent();
+        std::cout << "print\n";
         expr->print(indent + 1);
-        std::cout << "\n";
-        printIndent(indent);
-        std::cout << ")";
     }
 
     Value evaluate() override; // Implemented in cpp file
@@ -376,6 +376,7 @@ public:
 
     void print(int indent = 0) const override
     {
+        Node::indent = indent;
         first->print(indent);
         if (second)
         {
@@ -408,15 +409,12 @@ private:
 
 public:
     UnaryMinusNode(Node *e) : expr(e) {}
-
     void print(int indent = 0) const override
     {
-        printIndent(indent);
-        std::cout << "(-\n";
+        Node::indent = indent;
+        printIndent();
+        std::cout << "-\n";
         expr->print(indent + 1);
-        std::cout << "\n";
-        printIndent(indent);
-        std::cout << ")";
     }
 
     Value evaluate() override; // Implemented in cpp file
@@ -442,12 +440,10 @@ public:
 
     void print(int indent = 0) const override
     {
-        printIndent(indent);
-        std::cout << op << "(\n";
+        Node::indent = indent;
+        printIndent();
+        std::cout << op << "\n";
         expr->print(indent + 1);
-        std::cout << "\n";
-        printIndent(indent);
-        std::cout << ")";
     }
 
     Value evaluate() override; // Implemented in cpp file
@@ -471,7 +467,8 @@ public:
 
     void print(int indent = 0) const override
     {
-        printIndent(indent);
+        Node::indent = indent;
+        printIndent();
         std::cout << "\"" << value << "\"";
     }
 
@@ -501,10 +498,11 @@ public:
 
     void print(int indent = 0) const override
     {
-        printIndent(indent);
+        Node::indent = indent;
+        printIndent();
         std::cout << "elseif\n";
         condition->print(indent + 1);
-        std::cout << "\nthen\n";
+        std::cout << "\n";
         body->print(indent + 1);
         if (next)
         {

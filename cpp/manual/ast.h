@@ -14,7 +14,7 @@ class Node
 {
 public:
     virtual ~Node() = default;
-    virtual void print() const = 0;
+    virtual void print(int indent = 0) const = 0;
     virtual ICResult generateIC() = 0;
     virtual Value evaluate() = 0;
 
@@ -23,6 +23,13 @@ protected:
     static int labelCount;
     std::string newTemp() { return "t" + std::to_string(tempCount++); }
     std::string newLabel() { return "L" + std::to_string(labelCount++); }
+    void printIndent(int indent) const
+    {
+        for (int i = 0; i < indent; i++)
+        {
+            std::cout << "  ";
+        }
+    }
 };
 
 // Expression nodes
@@ -32,7 +39,11 @@ public:
     int value;
     NumNode(int v) : value(v) {}
 
-    void print() const override { std::cout << value; }
+    void print(int indent = 0) const override
+    {
+        printIndent(indent);
+        std::cout << value;
+    }
 
     Value evaluate() override { return value; }
 
@@ -49,7 +60,11 @@ public:
     std::string name;
     VarNode(const std::string &n) : name(n) {}
 
-    void print() const override { std::cout << name; }
+    void print(int indent = 0) const override
+    {
+        printIndent(indent);
+        std::cout << name;
+    }
 
     Value evaluate() override; // Implemented in cpp file
 
@@ -69,12 +84,17 @@ public:
     BinaryOpNode(Node *l, const std::string &o, Node *r)
         : left(l), op(o), right(r) {}
 
-    void print() const override
+    void print(int indent = 0) const override
     {
-        std::cout << "(";
-        left->print();
-        std::cout << " " << op << " ";
-        right->print();
+        printIndent(indent);
+        std::cout << "(\n";
+        left->print(indent + 1);
+        std::cout << "\n";
+        printIndent(indent + 1);
+        std::cout << op << "\n";
+        right->print(indent + 1);
+        std::cout << "\n";
+        printIndent(indent);
         std::cout << ")";
     }
 
@@ -102,8 +122,9 @@ private:
 public:
     BoolNode(bool val) : value(val) {}
 
-    void print() const override
+    void print(int indent = 0) const override
     {
+        printIndent(indent);
         std::cout << (value ? "true" : "false");
     }
 
@@ -113,7 +134,7 @@ public:
     {
         std::string temp = newTemp();
         return {temp, {temp + " = " + (value ? "1" : "0")}};
-    }
+    }                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
 };
 
 // Statement nodes
@@ -125,10 +146,11 @@ public:
 
     AssignNode(const std::string &v, Node *e) : var(v), expr(e) {}
 
-    void print() const override
+    void print(int indent = 0) const override
     {
-        std::cout << var << " = ";
-        expr->print();
+        printIndent(indent);
+        std::cout << var << " =\n";
+        expr->print(indent + 1);
     }
 
     Value evaluate() override; // Implemented in cpp file
@@ -140,62 +162,7 @@ public:
         return {var, exprCode};
     }
 };
-/*
-class IfNode : public Node
-{
-public:
-    Node *cond;
-    Node *thenBlock;
-    Node *elseBlock;
 
-    IfNode(Node *c, Node *t, Node *e = nullptr)
-        : cond(c), thenBlock(t), elseBlock(e) {}
-
-    void print() const override
-    {
-        std::cout << "if ";
-        cond->print();
-        std::cout << " then ";
-        thenBlock->print();
-        if (elseBlock)
-        {
-            std::cout << " else ";
-            elseBlock->print();
-        }
-        std::cout << " end";
-    }
-
-    Value evaluate() override; // Implemented in cpp file
-
-    ICResult generateIC() override
-    {
-        auto [condTemp, condCode] = cond->generateIC();
-        auto [_, thenCode] = thenBlock->generateIC();
-
-        std::string labelElse = newLabel();
-        std::string labelEnd = newLabel();
-
-        std::vector<std::string> code = condCode;
-        code.push_back("if " + condTemp + " = 0 goto " + labelElse);
-        code.insert(code.end(), thenCode.begin(), thenCode.end());
-
-        if (elseBlock)
-        {
-            auto [__, elseCode] = elseBlock->generateIC();
-            code.push_back("goto " + labelEnd);
-            code.push_back(labelElse + ":");
-            code.insert(code.end(), elseCode.begin(), elseCode.end());
-            code.push_back(labelEnd + ":");
-        }
-        else
-        {
-            code.push_back(labelElse + ":");
-        }
-
-        return {"", code};
-    }
-};
-*/
 class IfNode : public Node
 {
 public:
@@ -209,22 +176,28 @@ public:
 
     Value evaluate() override;
 
-    void print() const override
+    void print(int indent = 0) const override
     {
-        std::cout << "if ";
-        condition->print();
-        std::cout << " then ";
-        thenBlock->print();
+        printIndent(indent);
+        std::cout << "if\n";
+        condition->print(indent + 1);
+        std::cout << "\nthen\n";
+        thenBlock->print(indent + 1);
         if (elseifList)
         {
-            elseifList->print();
+            std::cout << "\n";
+            elseifList->print(indent);
         }
         if (elseBlock)
         {
-            std::cout << " else ";
-            elseBlock->print();
+            std::cout << "\n";
+            printIndent(indent);
+            std::cout << "else\n";
+            elseBlock->print(indent + 1);
         }
-        std::cout << " end";
+        std::cout << "\n";
+        printIndent(indent);
+        std::cout << "end";
     }
 
     std::pair<std::string, std::vector<std::string>> generateIC() override
@@ -265,13 +238,16 @@ public:
 
     WhileNode(Node *c, Node *b) : cond(c), block(b) {}
 
-    void print() const override
+    void print(int indent = 0) const override
     {
-        std::cout << "while ";
-        cond->print();
-        std::cout << " do ";
-        block->print();
-        std::cout << " end";
+        printIndent(indent);
+        std::cout << "while\n";
+        cond->print(indent + 1);
+        std::cout << "\ndo\n";
+        block->print(indent + 1);
+        std::cout << "\n";
+        printIndent(indent);
+        std::cout << "end";
     }
 
     Value evaluate() override; // Implemented in cpp file
@@ -308,17 +284,20 @@ public:
     ForNode(const std::string &v, Node *s, Node *e, Node *st, Node *b)
         : var(v), start(s), end(e), step(st), body(b) {}
 
-    void print() const override
+    void print(int indent = 0) const override
     {
-        std::cout << "for " << var << " = ";
-        start->print();
-        std::cout << ", ";
-        end->print();
-        std::cout << ", ";
-        step->print();
-        std::cout << " do ";
-        body->print();
-        std::cout << " end";
+        printIndent(indent);
+        std::cout << "for " << var << " =\n";
+        start->print(indent + 1);
+        std::cout << ",\n";
+        end->print(indent + 1);
+        std::cout << ",\n";
+        step->print(indent + 1);
+        std::cout << "\ndo\n";
+        body->print(indent + 1);
+        std::cout << "\n";
+        printIndent(indent);
+        std::cout << "end";
     }
 
     Value evaluate() override; // Implemented in cpp file
@@ -365,10 +344,13 @@ public:
 
     PrintNode(Node *e) : expr(e) {}
 
-    void print() const override
+    void print(int indent = 0) const override
     {
-        std::cout << "print(";
-        expr->print();
+        printIndent(indent);
+        std::cout << "print(\n";
+        expr->print(indent + 1);
+        std::cout << "\n";
+        printIndent(indent);
         std::cout << ")";
     }
 
@@ -392,13 +374,13 @@ public:
 
     BlockNode(Node *f, Node *s) : first(f), second(s) {}
 
-    void print() const override
+    void print(int indent = 0) const override
     {
-        first->print();
+        first->print(indent);
         if (second)
         {
-            std::cout << "; ";
-            second->print();
+            std::cout << "\n";
+            second->print(indent);
         }
     }
 
@@ -427,10 +409,13 @@ private:
 public:
     UnaryMinusNode(Node *e) : expr(e) {}
 
-    void print() const override
+    void print(int indent = 0) const override
     {
-        std::cout << "(-";
-        expr->print();
+        printIndent(indent);
+        std::cout << "(-\n";
+        expr->print(indent + 1);
+        std::cout << "\n";
+        printIndent(indent);
         std::cout << ")";
     }
 
@@ -455,10 +440,13 @@ private:
 public:
     UnaryOpNode(const std::string &o, Node *e) : op(o), expr(e) {}
 
-    void print() const override
+    void print(int indent = 0) const override
     {
-        std::cout << op << "(";
-        expr->print();
+        printIndent(indent);
+        std::cout << op << "(\n";
+        expr->print(indent + 1);
+        std::cout << "\n";
+        printIndent(indent);
         std::cout << ")";
     }
 
@@ -481,8 +469,9 @@ class StringNode : public Node
 public:
     StringNode(const std::string &v) : value(v) {}
 
-    void print() const override
+    void print(int indent = 0) const override
     {
+        printIndent(indent);
         std::cout << "\"" << value << "\"";
     }
 
@@ -509,16 +498,18 @@ public:
         : condition(cond), body(body), next(next) {}
 
     Value evaluate() override;
-    
-    void print() const override
+
+    void print(int indent = 0) const override
     {
-        std::cout << "elseif ";
-        condition->print();
-        std::cout << " then ";
-        body->print();
+        printIndent(indent);
+        std::cout << "elseif\n";
+        condition->print(indent + 1);
+        std::cout << "\nthen\n";
+        body->print(indent + 1);
         if (next)
         {
-            next->print();
+            std::cout << "\n";
+            next->print(indent);
         }
     }
 

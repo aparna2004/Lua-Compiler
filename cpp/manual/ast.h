@@ -10,6 +10,7 @@
 using Value = std::variant<int, bool, std::string>;
 using ICResult = std::pair<std::string, std::vector<std::string>>;
 
+/*
 class Node
 {
 public:
@@ -32,7 +33,54 @@ protected:
         }
     }
 };
+*/
 
+class Node
+{
+protected:
+    static bool debug;
+    static int depth;
+    static int tempCount;
+    static int labelCount;
+    static int indent;
+    std::string newTemp() { return "t" + std::to_string(tempCount++); }
+    std::string newLabel() { return "L" + std::to_string(labelCount++); }
+    void printIndent() const
+    {
+        for (int i = 0; i < Node::indent; i++)
+        {
+            std::cout << "  ";
+        }
+    }
+
+    void tracePrint(const std::string &nodeName) const
+    {
+        if (debug)
+        {
+            for (int i = 0; i < depth; i++)
+            {
+                std::cout << "  ";
+            }
+            std::cout << "Entering " << nodeName << std::endl;
+        }
+    }
+
+public:
+    static void setDebug(bool value) { debug = value; }
+
+    virtual ~Node() = default;
+    virtual void print(int indent = 0) const = 0;
+    virtual ICResult generateIC() = 0;
+    virtual Value evaluate() = 0;
+
+    // Helper to manage trace depth
+    class TraceGuard
+    {
+    public:
+        TraceGuard() { Node::depth++; }
+        ~TraceGuard() { Node::depth--; }
+    };
+};
 // Expression nodes
 class NumNode : public Node
 {
@@ -47,7 +95,12 @@ public:
         std::cout << value;
     }
 
-    Value evaluate() override { return value; }
+    Value evaluate() override 
+    {
+        tracePrint("NumNode");
+        TraceGuard guard;
+        return value;
+    }
 
     ICResult generateIC() override
     {
@@ -128,7 +181,12 @@ public:
         std::cout << (value ? "true" : "false");
     }
 
-    Value evaluate() override { return value; }
+    Value evaluate() override 
+    {
+        tracePrint("BoolNode");
+        TraceGuard guard;
+        return value;
+    }
 
     ICResult generateIC() override
     {
@@ -474,6 +532,8 @@ public:
 
     Value evaluate() override
     {
+        tracePrint("StringNode");
+        TraceGuard guard;
         return value;
     }
 

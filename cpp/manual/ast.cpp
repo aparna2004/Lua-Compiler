@@ -5,12 +5,16 @@
 int Node::tempCount = 0;
 int Node::labelCount = 0;
 int Node::indent = 0;
+bool Node::debug = false;
+int Node::depth = 0;
 
 // Global symbol table for variable storage
 std::map<std::string, Value> symbolTable;
 
 Value VarNode::evaluate()
 {
+    tracePrint("VarNode");
+    TraceGuard guard;
     if (symbolTable.find(name) == symbolTable.end())
     {
         throw std::runtime_error("Undefined variable: " + name);
@@ -20,6 +24,8 @@ Value VarNode::evaluate()
 
 Value BinaryOpNode::evaluate()
 {
+    tracePrint("BinaryOpNode");
+    TraceGuard guard;
     Value leftVal = left->evaluate();
     Value rightVal = right->evaluate();
 
@@ -155,6 +161,8 @@ Value BinaryOpNode::evaluate()
 
 Value AssignNode::evaluate()
 {
+    tracePrint("AssignNode");
+    TraceGuard guard;
     Value exprValue = expr->evaluate();
     symbolTable[var] = exprValue; // Store the Value directly
     return exprValue;
@@ -174,6 +182,8 @@ Value AssignNode::evaluate()
 // }
 Value IfNode::evaluate()
 {
+    tracePrint("IfNode");
+    TraceGuard guard;
     Value condResult = condition->evaluate();
     bool condValue;
 
@@ -207,6 +217,8 @@ Value IfNode::evaluate()
 
 Value ElseIfNode::evaluate()
 {
+    tracePrint("ElseIfNode");
+    TraceGuard guard;
     Value condResult = condition->evaluate();
     bool condValue;
 
@@ -236,6 +248,8 @@ Value ElseIfNode::evaluate()
 
 Value WhileNode::evaluate()
 {
+    tracePrint("WhileNode");
+    TraceGuard guard;
     while (std::get<bool>(cond->evaluate()))
     {
         block->evaluate();
@@ -245,6 +259,8 @@ Value WhileNode::evaluate()
 
 Value ForNode::evaluate()
 {
+    tracePrint("ForNode");
+    TraceGuard guard;
     int startVal = std::get<int>(start->evaluate());
     int endVal = std::get<int>(end->evaluate());
     int stepVal = std::get<int>(step->evaluate());
@@ -272,6 +288,8 @@ Value ForNode::evaluate()
 
 Value BlockNode::evaluate()
 {
+    tracePrint("BlockNode");
+    TraceGuard guard;
     first->evaluate();
     if (second)
         second->evaluate();
@@ -280,6 +298,8 @@ Value BlockNode::evaluate()
 
 Value PrintNode::evaluate()
 {
+    tracePrint("PrintNode");
+    TraceGuard guard;
     Value val = expr->evaluate();
     if (std::holds_alternative<std::string>(val))
     {
@@ -298,11 +318,15 @@ Value PrintNode::evaluate()
 
 Value UnaryMinusNode::evaluate()
 {
+    tracePrint("UnaryMinusNode");
+    TraceGuard guard;
     return -std::get<int>(expr->evaluate());
 }
 
 Value UnaryOpNode::evaluate()
 {
+    tracePrint("UnaryOpNode");
+    TraceGuard guard;
     if (op == "not")
     {
         return !std::get<bool>(expr->evaluate());

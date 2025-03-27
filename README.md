@@ -35,3 +35,17 @@ cd cpp/manual/
 make clean && make
 ./minilua input.lua
 ```
+
+### Debug and visualisation
+```sh
+# assuming input.lua is the input file
+./minilua input.lua [--tokens| --parsetree |--trace | --tac]
+
+```
+
+where
+
+- `--tokens` shows token recognition table
+- `--trace` shows node calls
+- `--parsetree` shows the parse tree
+- `--tac` genreates three address code

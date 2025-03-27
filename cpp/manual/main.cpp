@@ -97,8 +97,11 @@ std::string getTokenTypeName(TokenType type)
 std::ostream &operator<<(std::ostream &os, const Token &token)
 {
     os << std::left
+       << "|"
        << std::setw(30) << token.lexeme
+       <<"|"
        << std::setw(15) << getTokenTypeName(token.type)
+       << "|"
        << "Line " << token.line;
     return os;
 }
@@ -108,12 +111,14 @@ int main(int argc, char *argv[])
 {
     if (argc < 2)
     {
-        std::cerr << "Usage: " << argv[0] << " <filename> [--parsetree] [--tokens]" << std::endl;
+        std::cerr << "Usage: " << argv[0] << " <filename> [--parsetree] [--tokens] [--trace] [--tac]" << std::endl;
         return 1;
     }
 
     bool showParseTree = false;
     bool showTokens = false;
+    bool showTrace = false;
+    bool showTac = false;
 
     // Parse command line arguments
     for (int i = 2; i < argc; i++)
@@ -123,6 +128,10 @@ int main(int argc, char *argv[])
             showParseTree = true;
         if (arg == "--tokens")
             showTokens = true;
+        if (arg == "--trace")
+            showTrace = true;
+        if (arg == "--tac")
+            showTac = true;
     }
 
     std::ifstream file(argv[1]);
@@ -138,17 +147,24 @@ int main(int argc, char *argv[])
 
     try
     {
+        Node::setDebug(showTrace);
         Lexer lexer(source);
         auto tokens = lexer.scanTokens();
 
         if (showTokens)
         {
+            std::cout << "\n================================================\n";
+
             std::cout << "\nTokens:\n";
             std::cout << std::left
-                      << std::setw(15) << "Lexeme"
+            <<"|"
+                      << std::setw(30) << "Lexeme"
+                      <<"|"
                       << std::setw(15) << "Token Type"
+                      <<"|"
                       << "Position" << std::endl;
-            std::cout << std::string(45, '-') << std::endl;
+                      
+            std::cout << std::string(60, '-') << std::endl;
 
             for (const auto &token : tokens)
             {
@@ -164,11 +180,26 @@ int main(int argc, char *argv[])
         {
             if (showParseTree)
             {
+                std::cout << "\n================================================\n";
+
                 std::cout << "\nParse Tree:\n";
                 root->print();
                 std::cout << std::endl
                           << std::endl;
             }
+            if (showTac)
+            {
+                std::cout << "\n================================================\n";
+
+                std::cout << "\nThree Address Code:\n";
+                auto [_, code] = root->generateIC();
+                for (const auto &line : code)
+                {
+                    std::cout << line << std::endl;
+                }
+            }
+            std::cout << "\n================================================\n";
+            std::cout << "\nOutput:\n";
             root->evaluate();
         }
     }

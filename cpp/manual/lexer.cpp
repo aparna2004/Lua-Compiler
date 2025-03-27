@@ -213,3 +213,4 @@ std::vector<Token> Lexer::scanTokens()
     tokens.push_back({TokenType::EOF_TOKEN, "", line});
     return tokens;
 }
+

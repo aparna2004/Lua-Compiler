@@ -4,6 +4,7 @@
 // Initialize static members
 int Node::tempCount = 0;
 int Node::labelCount = 0;
+int Node::indent = 0;
 
 // Global symbol table for variable storage
 std::map<std::string, Value> symbolTable;
